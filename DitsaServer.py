@@ -52,17 +52,22 @@ class Ui_DitsaServer(object):
 
 		MainWindowSer.setCentralWidget(self.centralWidget)
 		self.mainToolBar = QtWidgets.QToolBar(MainWindowSer)
+		self.mainToolBar.setMovable(False)
 		self.mainToolBar.setObjectName("mainToolBar")
 		MainWindowSer.addToolBar(QtCore.Qt.TopToolBarArea, self.mainToolBar)
 		self.statusBar = QtWidgets.QStatusBar(MainWindowSer)
 		self.statusBar.setObjectName("statusBar")
 		MainWindowSer.setStatusBar(self.statusBar)
 
-		self.actionSave = QtWidgets.QAction(QtGui.QIcon('/home/ditsa/Prueba/DitsaServer/image/guardar.png'),'Save',MainWindowSer)
-		self.actionUpdateHost = QtWidgets.QAction(QtGui.QIcon('/home/ditsa/Prueba/DitsaServer/image/ethernet.png'),'UpdateHost',MainWindowSer)
+		self.actionSave = QtWidgets.QAction(QtGui.QIcon('/opt/Ditsa/DitsaServer/image/guardar.png'),'Save',MainWindowSer)
+		self.actionUpdateHost = QtWidgets.QAction(QtGui.QIcon('/opt/Ditsa/DitsaServer/image/ethernet.png'),'UpdateHost',MainWindowSer)
+
+		self.label = QtWidgets.QLabel()
 
 		self.mainToolBar.addAction(self.actionUpdateHost)
 		self.mainToolBar.addAction(self.actionSave)
+
+		self.mainToolBar.addWidget(self.label)
 
 		self.retranslateUi(MainWindowSer)
 		QtCore.QMetaObject.connectSlotsByName(MainWindowSer)
@@ -73,21 +78,26 @@ class Ui_DitsaServer(object):
 		MainWindowSer.closeEvent = self.closeEvent
 
 		self.hostname = ['ditsaServer1','ditsaServer2','ditsaServer3','ditsaServer4','ditsaServer5','ditsaServer6','ditsaServer7','distaServer8','ditsaServer9','ditsaServer10','ditsaServer11','ditsaServer12','ditsaServer13','ditsaServer14','ditsaServer15','ditsaServer16','ditsaServer17','ditsaServer18','ditsaServer19','ditsaServer20','ditsaServer21','ditsaServer22','ditsaServer23','ditsaServer24','ditsaServer25','ditsaServer26','ditsaServer27','ditsaServer28','ditsaServer29','ditsaServer30'] #raspberrypi
+		self.port = [65433,65434,65435,65436,65437,65438,65439,65440,65441,65442,65443,65444,65445,65446,65447,65448,65449,65450,65451,65452,65453,65454,65455,65456,65457,65458,65459,65460,65461,65462]
+		self.password = ['server1','server2','server3','server4','server5','server6','server7','server8','server9','server10','server11','server12','server13','server14','server15','server16','server17','server18','server19','server20','server21','server22','server23','server24','server26','server27','server28','server29','server30']
 		self.listHostname = list()
 		self.tmprow = list()
+		self.addrs = list()
 
 		self.flagEmpty = False
 		self.flagSave = False
 		self.flagBtn = False
+		self.flagRepit = False
+
 		self.actionSave.triggered.connect(self.on_actionsave)
 		self.actionUpdateHost.triggered.connect(self.pingHostname)
 
 		self.MainWindowSer = MainWindowSer
 
-	def retranslateUi(self, MainWindow):
+	def retranslateUi(self, MainWindowSer):
 		_translate = QtCore.QCoreApplication.translate
-		MainWindow.setWindowTitle(_translate("MainWindow", "Ditsa Server"))
-	#	self.tableWidget.setSortingEnabled(False)
+		MainWindowSer.setWindowTitle(_translate("MainWindowSer", "Ditsa Server"))
+		MainWindowSer.setWindowIcon(QtGui.QIcon('/opt/Ditsa/DitsaServer/ditsa_server_pro.png'))
 
 	def showEvent(self,event):
 		print("showEvent")
@@ -113,7 +123,7 @@ class Ui_DitsaServer(object):
 		self.count = 0
 		self.listHostname.clear()
 		self.tableWidget.clearContents()
-		self.progressBar.setFormat("Finding ...")
+		self.progressBar.setFormat("Looking for ...")
 
 		n = len(self.hostname)
 		self.percentage = 100.0 / float(n)
@@ -139,18 +149,24 @@ class Ui_DitsaServer(object):
 		
 			if response == 0:
 				j+=1
-				self.listHostname.append(self.hostname[i])	
+				self.listHostname.append(self.hostname[i])
+				self.listHostname.append(self.port[i])
+				self.listHostname.append(self.password[i])
+				
 				self.tableWidget.setRowCount(j)
 				self.itemAddr()
 
-				for k in range(len(self.listHostname)):
+				for k in range(0,len(self.listHostname),3):
 					self.tabItem(self.listHostname[k],j-1,0)
 
 		self.progressBar.setValue(100)
 		self.progressBar.setFormat("Ready!")
+		font = QtGui.QFont("Arial",8, QtGui.QFont.Normal)
+		self.label.setFont(font)
+		self.label.setText("			To add address(Press Enter)")
 
 		for x in range(len(self.listHostname)):
-			itm = QtWidgets.QTableWidgetItem()			
+			itm = QtWidgets.QTableWidgetItem()
 			itm.setBackground(QtGui.QColor("white"))
 			self.tableWidget.setItem(x,1,itm)
 		
@@ -183,22 +199,54 @@ class Ui_DitsaServer(object):
 
 			for i in range(row):
 				for j in range(2):
-					data = self.tableWidget.item(i,j)
-					if data != None:
+					if self.flagEmpty != True:
+						data = self.tableWidget.item(i,j)
+						#if data != None:
 						x = data.text()
-						self.tmprow.append(x)
+						if x != "":
+							self.tmprow.append(x)
 					
-					if j == 1 and data == None:
-						self.tmprow.clear()
-						self.flagEmpty = True
-						print("renglon vacio!!")
-						msg.critical(self.MainWindowSer,'Error',"Cannot save program empty or incomplete")
+						if j == 1 and x == "":	#data == None:
+							self.tmprow.clear()
+							self.flagEmpty = True
+							#print("renglon vacio!!")
+							msg.critical(self.MainWindowSer,'Error',"Cannot save program empty or incomplete")
 			
-			if self.flagEmpty != True:
-				print("tmprow:",self.tmprow)
-				self.flagSave = True
-				settings = QtCore.QSettings('/home/ditsa/DitsaNet/Settings/ServerConfig.ini', QtCore.QSettings.NativeFormat)
-				settings.setValue("servers",self.tmprow)
+			if self.flagEmpty != True: 			
+				self.addrs.clear()
+				self.flagRepit = False
+
+				for j in range(1,len(self.tmprow),2):
+					self.addrs.append(self.tmprow[j])
+
+				for n in range(len(self.addrs)): #Evalua si hay algun elemento addrs repetido
+					x = self.addrs.count(self.addrs[n])
+					if x >= 2:
+						msgR = QtWidgets.QMessageBox()						
+						self.flagRepit = True
+						msgR.critical(self.MainWindowSer,'Error',"Cannot save repeated address")
+						#print("Addrs repetidos")
+						break
+
+				if self.flagRepit != True:
+					self.flagSave = True
+					self.t = 0
+					for r in range(1,len(self.listHostname),3):
+						self.tmprow.insert(r+self.t,self.listHostname[r])
+						self.t += 1
+						self.tmprow.insert(r+self.t,self.listHostname[r+1])
+						
+					text = ""
+					for k in range(0,len(self.tmprow),4):
+						text += str(self.tmprow[k])+" ---------> "+self.tmprow[k+3]+"\n"
+
+					msave = QtWidgets.QMessageBox()
+					mssge = msave.information(self.MainWindowSer,'Information',"Do you want to save this?\n\n"+ text,QtWidgets.QMessageBox.Save|QtWidgets.QMessageBox.Discard)
+					
+					if mssge == msave.Save:
+						settings = QtCore.QSettings('/home/ditsa/DitsaNet/Settings/ServerConfig.ini', QtCore.QSettings.NativeFormat)
+						settings.setValue("servers",self.tmprow)
+						print("tmp:",self.tmprow)
 
 if __name__ == "__main__":
 	import sys
